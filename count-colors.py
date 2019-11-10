@@ -30,7 +30,7 @@ farben = ("rot", "gruen", "weiss")
 farbraum = [([0, 0, 192], [0,0,255]), ([32,180,0], [80,202,132]), ([255,255,255], [255,255,255])]
 d = dict(zip(farben, farbraum))
 
-h = '/home/dolic/gmro/gmroproc/'
+h = '/home/dolicd/gmro/img/'
 spcnt = len(h.split("/")) - 1
 
 l = []
@@ -44,8 +44,8 @@ dfc = pd.DataFrame({'lon':[], 'lat':[], 'Datum':[], 'Zeit':[], 'Farbe':[]})
 for i in l:
     img = cv2.imread(i, 1)
     print("Processing ", i)
-    dt = i.split("/")[spcnt][5:13]
-    zt = i.split("/")[spcnt][13:17]
+    dt = i.split("/")[spcnt][5:13]    # Get date from timestamp
+    zt = i.split("/")[spcnt][13:17]   # Get time from timestamp
     for f in farben:
         fr = d[f]
         try:
@@ -63,6 +63,6 @@ for i in l:
             print("File " + str(i) + " not processed.")
             pass
 
-df.to_csv('/home/dolic/gmro-count.csv')
-dfc.to_csv('/home/dolic/gmro-coord.csv')
+df.to_csv('/home/dolicd/gmro/gmro-count.csv')
+dfc.to_csv('/home/dolicd/gmro/gmro-coord.csv')
 

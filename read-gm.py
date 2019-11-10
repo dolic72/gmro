@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.5
+#!/usr/local/bin/python3.7
 ###############################################################
 ## Get Screenshots from Google Maps
 ## 
@@ -14,24 +14,19 @@
 ## The URL to use for Screenshots can be given to 
 ## parameter url.
 ###############################################################
+import os
 import time
 import datetime
-from selenium import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import cv2
 import numpy as np
 import pandas as pd
-import os
-
-dcap = dict(DesiredCapabilities.PHANTOMJS)
-dcap["phantomjs.page.settings.userAgent"] = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/53 "
-    "(KHTML, like Gecko) Chrome/15.0.87"
-)
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 ## Configuration
-pfad = '/home/dolic/gmro/'
-phjspath = '/opt/phantomjs/phantomjs-2.1.1-linux-x86_64/bin/phantomjs'
+pfad = '/usr/local/img/'
+hbpath = '/usr/bin/chromedriver'
+chrome_path = '/usr/bin/google-chrome'
 url = 'https://www.google.de/maps/@47.8554527,12.1209407,14.25z/data=!5m1!1e1'
 st = datetime.datetime.fromtimestamp(time.time()).strftime('%Y%m%d%H%M%S')
 prefix = "gmro"
@@ -41,14 +36,26 @@ farben = ("rot", "gruen", "weiss")
 farbraum = [([0, 0, 192], [0,0,255]), ([32,180,0], [80,202,132]), ([255,255,255], [255,255,255])]
 
 ## Do the screenshot
-def mapsc(url, outfile, exec_path = phjspath, des_cap = dcap):
-    driver = webdriver.PhantomJS(executable_path=exec_path, desired_capabilities=des_cap)
-    driver.set_window_size(1280, 800)
+chrome_options = Options()  
+chrome_options.add_argument("--headless")  
+chrome_options.add_argument("--window-size=1280,800")
+chrome_options.binary_location = chrome_path
+os.environ["webdriver.chrome.driver"] = hbpath
+
+def mapsc(url, outfile):
+    if not url.startswith('http'):
+        raise Exception('URLs need to start with "http"')
+
+    driver = webdriver.Chrome(
+        executable_path = hbpath,
+        chrome_options = chrome_options
+    )
     driver.get(url)
     driver.implicitly_wait(3)
     time.sleep(2)
-    driver.save_screenshot(outfile)
-
+    driver.save_screenshot(pfad + "gmro-" + st + ".png")
+    driver.close()
+    
 
 ## Calculate frequency of coloured pixel and numeric matrix with locations
 ## Write to CSV Files
@@ -60,8 +67,8 @@ def create_tensor(imgfile, colors, colorspace, csv_count, csv_coord):
     spcnt = len(i.split("/")) - 1
     img = cv2.imread(i, 1)
     print("Processing ", i)
-    dt = i.split("/")[spcnt][5:13]
-    zt = i.split("/")[spcnt][13:17]
+    dt = i.split("/")[spcnt][5:13]  # Extract date
+    zt = i.split("/")[spcnt][13:17] # Extract time
     for f in colors:
         fr = d[f]
         try:
@@ -78,8 +85,8 @@ def create_tensor(imgfile, colors, colorspace, csv_count, csv_coord):
         except:
             print("File " + str(i) + " not processed.")
             pass
-    df.to_csv(csv_count, mode = 'a')
-    dfc.to_csv(csv_coord, mode = 'a')
+    df.to_csv(csv_count, header = False, mode = 'a')
+    dfc.to_csv(csv_coord, header = False, mode = 'a')
 
 
 ### Execution
